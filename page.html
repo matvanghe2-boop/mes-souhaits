@@ -29,8 +29,11 @@
     if (NOUVELLE && location.hostname !== NOUVELLE) location.replace("https://" + NOUVELLE + "/");
   }
 })();
-try{if(!localStorage.getItem("noel-famille:vu")&&!matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("intro-active")}catch(e){}
+try{if(!localStorage.getItem((window.__DEMO__?"mes-souhaits-demo:":"noel-famille:")+"vu")&&!matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("intro-active")}catch(e){}
 </script>
+<!-- Signature du réseau Orbit : le bandeau et le fond animé partagés par tous les sites du hub. -->
+<script src="https://orbit-umber-sigma.vercel.app/orbit-header.js" defer></script>
+<script src="https://orbit-umber-sigma.vercel.app/orbit-ambient.js" defer></script>
 <!--meta:debut-->
 <title>Ma liste de souhaits</title>
 <meta name="description" content="Déballe les paquets et dis à la famille de quel cadeau tu t'occupes.">
@@ -137,7 +140,12 @@ button,input,textarea{font:inherit;color:inherit}
 .intro-passer:focus-visible{outline:2px solid var(--bougie);outline-offset:3px}
 
 /* ---------- Guirlande ---------- */
-.guirlande{position:relative;height:56px;margin-top:env(safe-area-inset-top,0px);pointer-events:none}
+/* Bandeau du réseau Orbit, en haut : il prend la marge de l'encoche du téléphone et garde sa place avant d'être chargé. */
+orbit-header{display:block;position:relative;z-index:2;padding-top:env(safe-area-inset-top,0px)}
+orbit-header:not(:defined){height:calc(47px + env(safe-area-inset-top,0px))}
+.bandeau-demo{position:relative;margin:0;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));
+  text-align:center;font-size:.86rem;font-weight:600;line-height:1.4;color:var(--nuit);background:var(--bougie)}
+.guirlande{position:relative;height:56px;pointer-events:none}
 .fil{position:absolute;left:0;top:0;width:100%;height:40px;overflow:visible;display:block}
 .fil path.cable{fill:none;stroke:var(--fil);stroke-width:2;stroke-linecap:round}
 .fanion{transform-box:fill-box;transform-origin:50% 0;animation:fanion var(--duree,2.6s) ease-in-out var(--retard,0s) infinite alternate;filter:drop-shadow(0 3px 3px rgba(0,0,0,.3))}
@@ -626,6 +634,8 @@ h1.long{font-size:clamp(2.4rem,8vw,5rem)}
 </style>
 </head>
 <body>
+<orbit-header app-name="Mes souhaits" theme="gift" accent-var="--bougie" github="https://github.com/matvanghe2-boop/mes-souhaits" compact static></orbit-header>
+<orbit-ambient accent-var="--bougie" density="0.6" blend="screen"></orbit-ambient>
 <div class="intro" id="intro">
   <div class="intro-guirlande" id="intro-guirlande">
     <svg viewBox="0 0 360 46" preserveAspectRatio="none"><path d="M0 6 Q20 40 40 6 Q60 40 80 6 Q100 40 120 6 Q140 40 160 6 Q180 40 200 6 Q220 40 240 6 Q260 40 280 6 Q300 40 320 6 Q340 40 360 6"/></svg>
@@ -638,6 +648,7 @@ h1.long{font-size:clamp(2.4rem,8vw,5rem)}
 <canvas id="confettis" aria-hidden="true"></canvas>
 
 <div class="site">
+  <p class="bandeau-demo" id="bandeau-demo" hidden>Démo : rien n'est enregistré. Déballe un paquet, réserve-le, puis ouvre l'éditeur pour changer d'occasion.</p>
   <div class="guirlande" aria-hidden="true">
     <svg class="fil" id="fil"></svg>
     <div class="ampoules" id="ampoules"></div>
@@ -909,7 +920,10 @@ let themeActif = THEMES[document.documentElement.dataset.theme] ? document.docum
 const T = () => THEMES[themeActif];
 const joindreTitre = (debut, mot) => (/['’]$/.test(debut) ? debut + mot : `${debut} ${mot}`);
 
-const CLE = "noel-famille:";
+/* Mode démo (/demo) : le serveur glisse une liste d'exemple dans window.__DEMO__. Tout se passe alors
+   dans la page, rien n'est envoyé ni enregistré, et les réglages du navigateur sont rangés à part. */
+const DEMO = window.__DEMO__ && typeof window.__DEMO__ === "object" ? window.__DEMO__ : null;
+const CLE = DEMO ? "mes-souhaits-demo:" : "noel-famille:";
 const memo = {
   lire(k, defaut) { try { const v = localStorage.getItem(CLE + k); return v === null ? defaut : JSON.parse(v); } catch (e) { return defaut; } },
   ecrire(k, v) { try { if (v === null) localStorage.removeItem(CLE + k); else localStorage.setItem(CLE + k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } }
@@ -1006,6 +1020,7 @@ function armer(bouton, texteArme, action) {
 }
 
 async function api(chemin, options = {}) {
+  if (DEMO) return demoApi(chemin, options);
   try {
     const r = await fetch(chemin, {
       cache: "no-store",
@@ -2172,15 +2187,92 @@ async function charger({ force = false } = {}) {
   }
 }
 
+/* ============================ Démo ============================ */
+/* Réplique en mémoire des trois routes du serveur, avec les mêmes réponses et les mêmes codes. */
+let demoEtat = null;
+function demoApi(chemin, options = {}) {
+  if (!demoEtat) demoEtat = { liste: normaliserListe(DEMO.liste), resa: { ...(DEMO.reservations || {}) }, version: 1 };
+  const d = demoEtat;
+  const rep = (statut, corps) => Promise.resolve({ statut, corps: JSON.parse(JSON.stringify(corps)) });
+  let corps = {};
+  try { corps = options.body ? JSON.parse(options.body) : {}; } catch (e) { /* corps vide */ }
+  const url = new URL(chemin, location.href);
+  if (url.pathname === "/api/etat") {
+    if (url.searchParams.get("v") === String(d.version)) return rep(200, { inchange: true, version: d.version });
+    return rep(200, { version: d.version, liste: d.liste, reservations: d.resa });
+  }
+  if (url.pathname === "/api/reserver") {
+    const id = String(corps.id || "");
+    if (!d.liste.cadeaux.some(c => c.id === id)) return rep(404, { message: "Ce cadeau n'est plus dans la liste." });
+    const actuel = d.resa[id];
+    if (corps.action === "prendre") {
+      const nom = txt(corps.nom).slice(0, 40);
+      if (!nom) return rep(400, { message: "Indique ton prénom." });
+      const cle = maCle || "demo-moi";
+      if (actuel && actuel.cle !== cle) return rep(409, { message: `${actuel.nom} s'en occupe déjà.`, reservation: actuel });
+      d.resa[id] = { nom, message: txt(corps.message).slice(0, 140), quand: Date.now(), cle };
+      d.version++;
+      return rep(200, { ok: true, reservation: d.resa[id] });
+    }
+    if (corps.action === "liberer") {
+      if (actuel && actuel.cle !== (maCle || "demo-moi")) return rep(403, { message: "Seule la personne qui s'en occupe peut se retirer." });
+      delete d.resa[id];
+      d.version++;
+      return rep(200, { ok: true });
+    }
+  }
+  if (url.pathname === "/api/admin") {
+    if (corps.action === "verifier") return rep(200, { ok: true });
+    if (corps.action === "enregistrer") {
+      const liste = normaliserListe(corps.liste);
+      liste.exemple = false;
+      liste.maj = Date.now();
+      const ids = new Set(liste.cadeaux.map(c => c.id));
+      for (const k of Object.keys(d.resa)) if (!ids.has(k)) delete d.resa[k];
+      d.liste = liste;
+      d.version++;
+      return rep(200, { ok: true, liste });
+    }
+    if (corps.action === "liberer") { delete d.resa[corps.id]; d.version++; return rep(200, { ok: true }); }
+    if (corps.action === "vider") { d.resa = {}; d.version++; return rep(200, { ok: true }); }
+  }
+  return rep(400, { message: "Action inconnue." });
+}
+/* Pour montrer la synchronisation en direct : deux membres fictifs de la famille réservent pendant la visite. */
+function animerDemo() {
+  const scenario = [[15000, "Tom", "Je m'en charge !"], [45000, "Mamie", "Avec plaisir"]];
+  for (const [delai, nom, message] of scenario) {
+    setTimeout(() => {
+      if (!demoEtat) return;
+      const libres = demoEtat.liste.cadeaux.filter(c => !demoEtat.resa[c.id]);
+      if (!libres.length) return;
+      const c = libres[(Math.random() * libres.length) | 0];
+      demoEtat.resa[c.id] = { nom, message, quand: Date.now(), cle: `demo-${clePersonne(nom)}` };
+      demoEtat.version++;
+      charger();
+    }, delai);
+  }
+}
+
 /* ============================ Mode admin ============================ */
 function majBarreAdmin() {
   if (!admin.actif) return;
   const t = $("#admin-texte");
-  if (horsLigne) t.textContent = "La base de données n'est pas encore branchée : les réservations et l'enregistrement ne marchent pas encore.";
+  if (DEMO) t.textContent = "Démo : l'éditeur est ouvert à tous. Change d'occasion, ajoute un cadeau, libère les réservations : rien n'est enregistré.";
+  else if (horsLigne) t.textContent = "La base de données n'est pas encore branchée : les réservations et l'enregistrement ne marchent pas encore.";
   else if (SAUVE && SAUVE.exemple) t.textContent = "Ces cadeaux sont des exemples. Touche « Modifier la liste » pour mettre tes vrais cadeaux. Toi seul vois ce message.";
   else t.textContent = "Toi seul vois ces boutons. Tes changements apparaissent pour toute la famille dès que tu enregistres.";
 }
 async function initAdmin() {
+  if (DEMO) {
+    admin.actif = true;
+    admin.cle = "demo";
+    $("#barre-admin").hidden = false;
+    $("#btn-quitter-admin").hidden = true;
+    majBarreAdmin();
+    if (D) { $$(".carte", grille).forEach(majCarte); majFiche(); }
+    return;
+  }
   const m = location.hash.match(/(?:^#|&)admin=([^&]+)/);
   if (m) {
     admin.cle = decodeURIComponent(m[1]);
@@ -2431,7 +2523,7 @@ async function enregistrer() {
     majBarreAdmin();
     confettis.fete();
     son.carillon();
-    toast("Liste enregistrée. Toute la famille la voit maintenant.");
+    toast(DEMO ? "C'est appliqué à la démo. Sur ta vraie liste, toute la famille le verrait aussitôt." : "Liste enregistrée. Toute la famille la voit maintenant.");
     VERSION = null;
     charger({ force: true });
   } else if (statut === 400 && Array.isArray(corps.erreurs)) {
@@ -2577,7 +2669,7 @@ function preparerEditeur() {
     if (e.key === "Escape" && panneau.classList.contains("ouvert") && !dlg.open) fermerPanneau();
   });
   addEventListener("beforeunload", e => {
-    if (estModifie()) { e.preventDefault(); e.returnValue = ""; }
+    if (!DEMO && estModifie()) { e.preventDefault(); e.returnValue = ""; }
   });
 }
 
@@ -2637,6 +2729,10 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) char
 addEventListener("focus", () => charger());
 addEventListener("hashchange", () => { if (/(?:^#|&)admin=/.test(location.hash)) initAdmin(); });
 initAdmin();
+if (DEMO) {
+  $("#bandeau-demo").hidden = false;
+  animerDemo();
+}
 })();
 </script>
 </body>

@@ -15,6 +15,7 @@ const charger = f => import(pathToFileURL(path.join(racine, f)).href);
 process.chdir(racine);
 const routes = {
   "/": await charger("api/page.js"),
+  "/demo": await charger("api/page.js"),
   "/api/etat": await charger("api/etat.js"),
   "/api/reserver": await charger("api/reserver.js"),
   "/api/admin": await charger("api/admin.js")

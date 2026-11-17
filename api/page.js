@@ -4,7 +4,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { redis, baseDisponible, CLES } from "./_lib/stockage.js";
-import { lireListe, texte, THEMES } from "./_lib/commun.js";
+import { lireListe, listeInitiale, texte, THEMES } from "./_lib/commun.js";
 
 // Mêmes textes par défaut que la table THEMES de page.html.
 const META = {
@@ -19,12 +19,32 @@ const DESCRIPTION = "Déballe les paquets et dis à la famille de quel cadeau tu
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const joindre = (debut, mot) => (/['’]$/.test(debut) ? debut + mot : `${debut} ${mot}`);
 
+// La démo (/demo, lien de la carte dans le hub Orbit) : la liste d'exemple et trois réservations fictives.
+// Tout se joue ensuite dans le navigateur du visiteur ; la vraie liste n'est jamais lue.
+const DEMO_RESERVATIONS = {
+  ecouteurs: { nom: "Julie", message: "Je le prends avec Paul", cle: "demo-julie" },
+  jeu: { nom: "Papi Jo", message: "", cle: "demo-papi-jo" },
+  cafe: { nom: "Léa", message: "", cle: "demo-lea" }
+};
+
 let gabarit = null;
 
 export async function GET(request) {
   if (!gabarit) gabarit = await readFile(path.join(process.cwd(), "page.html"), "utf8");
+  const adresse = new URL(request.url);
+  const demo = adresse.pathname === "/demo" || adresse.searchParams.has("demo");
   let config = {};
-  if (baseDisponible()) {
+  let donneesDemo = null;
+  if (demo) {
+    const liste = listeInitiale();
+    const themeDemande = adresse.searchParams.get("theme");
+    if (THEMES.includes(themeDemande)) liste.config.theme = themeDemande;
+    const maintenant = Date.now();
+    const reservations = Object.fromEntries(Object.entries(DEMO_RESERVATIONS)
+      .map(([id, r], i) => [id, { ...r, quand: maintenant - (i + 1) * 3600000 }]));
+    donneesDemo = { liste, reservations };
+    config = liste.config;
+  } else if (baseDisponible()) {
     try {
       const [brut] = await redis(["GET", CLES.liste]);
       config = lireListe(brut).config || {};
@@ -38,12 +58,14 @@ export async function GET(request) {
   const titre = joindre(debut, mot);
   const long = titre.length > 22 || Math.max(...titre.split(/\s+/).map(x => x.length)) > 11;
   const h1 = /['’]$/.test(debut) ? `${esc(debut)}<em>${esc(mot)}</em>` : `${esc(debut)} <em>${esc(mot)}</em>`;
-  const base = new URL(request.url).origin;
+  const base = adresse.origin;
   const bloc = [
     `<title>${esc(titre)}</title>`,
     `<meta name="description" content="${esc(DESCRIPTION)}">`,
+    // La vraie liste porte des prénoms : elle ne doit pas apparaître dans les moteurs de recherche.
+    ...(demo ? [] : [`<meta name="robots" content="noindex, nofollow">`]),
     `<meta property="og:type" content="website">`,
-    `<meta property="og:url" content="${esc(base)}/">`,
+    `<meta property="og:url" content="${esc(base)}${demo ? "/demo" : "/"}">`,
     `<meta property="og:title" content="${esc(`${titre} ${m.emoji}`)}">`,
     `<meta property="og:description" content="${esc(DESCRIPTION)}">`,
     `<meta property="og:image" content="${esc(base)}/partage-${theme}.jpg">`,
@@ -69,8 +91,12 @@ export async function GET(request) {
   // Ancienne adresse (réglée dans Vercel : MIGRATION_DEPUIS → MIGRATION_VERS) : la page emmène
   // les réglages du visiteur vers la nouvelle adresse. Les adresses ne sont pas écrites dans le code.
   const depuis = process.env.MIGRATION_DEPUIS, vers = process.env.MIGRATION_VERS;
-  if (depuis && vers && new URL(request.url).hostname === depuis && /^[a-z0-9.-]+$/i.test(vers)) {
+  if (!demo && depuis && vers && adresse.hostname === depuis && /^[a-z0-9.-]+$/i.test(vers)) {
     etapes.push(h => h.replace("<head>", () => `<head>\n<script>window.__MIGRATION_VERS__=${JSON.stringify(vers)}</script>`));
+  }
+  if (donneesDemo) {
+    const json = JSON.stringify(donneesDemo).replace(/</g, "\\u003c");
+    etapes.push(h => h.replace("<head>", () => `<head>\n<script>window.__DEMO__=${json}</script>`));
   }
   const html = etapes.reduce((h, f) => f(h), gabarit);
   return new Response(html, {

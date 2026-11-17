@@ -1,6 +1,7 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/api/page" }
+    { "source": "/", "destination": "/api/page" },
+    { "source": "/demo", "destination": "/api/page?demo=1" }
   ],
   "functions": {
     "api/page.js": { "includeFiles": "page.html" }

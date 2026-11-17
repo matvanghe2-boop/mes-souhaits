@@ -14,12 +14,13 @@ const p = new URLSearchParams(location.search);
 const f = document.getElementById("f");
 f.style.width = (p.get("w") || 390) + "px";
 f.style.height = (p.get("h") || 1400) + "px";
-f.src = "/" + (p.get("hash") ? "#" + p.get("hash") : "");
+f.src = (p.get("chemin") || "/") + (p.get("hash") ? "#" + p.get("hash") : "");
 f.onload = () => {
   const d = f.contentDocument, w = f.contentWindow;
   const attendre = Number(p.get("attente") || 3500);
   const sc = p.get("scenario");
   setTimeout(() => {
+    if (p.has("sans-bandeau")) d.querySelectorAll("orbit-header, #bandeau-demo, .barre-admin").forEach(e => e.remove());
     if (p.get("y")) w.scrollTo(0, Number(p.get("y")));
     if (sc === "deballer" || sc === "pendant") {
       const b = d.querySelector(`.carte[data-id="${p.get("id") || "echarpe"}"] .face-avant`);
