@@ -42,7 +42,7 @@ http.createServer(async (req, res) => {
       return;
     }
     const statiques = {
-      "/index.html": ["index.html", "text/html; charset=utf-8"],
+      "/page.html": ["page.html", "text/html; charset=utf-8"],
       "/outils/apercu.html": ["outils/apercu.html", "text/html; charset=utf-8"],
       "/partage-noel.jpg": ["partage-noel.jpg", "image/jpeg"],
       "/partage-anniversaire.jpg": ["partage-anniversaire.jpg", "image/jpeg"],

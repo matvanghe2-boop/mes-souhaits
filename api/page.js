@@ -1,4 +1,4 @@
-// GET / (via une réécriture dans vercel.json) : sert index.html avec le titre, l'aperçu de partage
+// GET / (via une réécriture dans vercel.json) : sert page.html avec le titre, l'aperçu de partage
 // et le thème de l'occasion en cours. Les messageries (WhatsApp, SMS…) lisent ces balises sans exécuter
 // la page : c'est ici que l'aperçu du lien suit le thème choisi dans le mode admin.
 import { readFile } from "node:fs/promises";
@@ -6,7 +6,7 @@ import path from "node:path";
 import { redis, baseDisponible, CLES } from "./_lib/stockage.js";
 import { lireListe, texte, THEMES } from "./_lib/commun.js";
 
-// Mêmes textes par défaut que la table THEMES de index.html.
+// Mêmes textes par défaut que la table THEMES de page.html.
 const META = {
   noel: { emoji: "🎄", titre: "Ma liste de", motDore: "Noël", couleur: "#0c1d1a", sousTitre: "Quelques idées pour remplir la hotte.",
     intro: "Chut… on allume les lumières", rubrique: "Sous le sapin", pied: "Joyeux Noël à tous." },
@@ -22,7 +22,7 @@ const joindre = (debut, mot) => (/['’]$/.test(debut) ? debut + mot : `${debut}
 let gabarit = null;
 
 export async function GET(request) {
-  if (!gabarit) gabarit = await readFile(path.join(process.cwd(), "index.html"), "utf8");
+  if (!gabarit) gabarit = await readFile(path.join(process.cwd(), "page.html"), "utf8");
   let config = {};
   if (baseDisponible()) {
     try {

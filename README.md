@@ -6,7 +6,7 @@ et tout le monde voit qui s'occupe de quoi, en direct, sans doublon possible.
 
 ## Ce qu'il y a dedans
 
-- `index.html` : toute la page (décor, animations, réservations, éditeur du mode admin).
+- `page.html` : toute la page (décor, animations, réservations, éditeur du mode admin). Elle est servie par `api/page.js`, jamais directement, pour que le titre et l'aperçu de partage suivent l'occasion.
 - `api/` : les fonctions Vercel.
   - `page.js` sert la page avec le titre et l'aperçu de partage de l'occasion en cours.
   - `etat.js` renvoie la liste et les réservations.
