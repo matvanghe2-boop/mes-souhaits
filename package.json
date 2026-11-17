@@ -1,0 +1,11 @@
+{
+  "name": "liste-noel-famille",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "dev": "node outils/serveur-local.mjs"
+  }
+}

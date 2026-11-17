@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Image de partage</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Figtree:wght@600&family=Gloock&display=block">
+<style>
+/* Images d'aperçu (1200 × 630) affichées quand le lien est envoyé par message, une par thème :
+   ?theme=noel | anniversaire | fete.  ?icone=1 donne l'icône 180 × 180.  Rendu par outils/generer-images.py. */
+:root{--nuit:#0c1d1a;--nuit-2:#133129;--halo-a:rgba(243,185,80,.2);--halo-b:rgba(31,75,64,.95);--fil:#2f5d50;--loin:#173a31;
+  --givre:#f4efe4;--doux:#c9d6cf;--bougie:#f3b950;--airelle:#c8344c;--menthe:#74cdb5;--glacier:#92b6ff;--kraft:#c9a16a;--encre:#2b1e15}
+.anniversaire{--nuit:#160f26;--nuit-2:#241640;--halo-a:rgba(255,93,143,.22);--halo-b:rgba(59,38,104,.95);--fil:#4a3a6e;--loin:#2a1d4a;
+  --givre:#f7f0f6;--doux:#d6cae4;--bougie:#ffc857;--airelle:#ff5d8f;--menthe:#5fd8c4;--glacier:#9aa6ff}
+.fete{--nuit:#0b1229;--nuit-2:#141f44;--halo-a:rgba(246,196,83,.22);--halo-b:rgba(35,51,110,.95);--fil:#3a4a7a;--loin:#18244d;
+  --givre:#f3f1ea;--doux:#c9d0e2;--bougie:#f6c453;--airelle:#e5485f;--menthe:#6fd3c0;--glacier:#8fb0ff}
+*{box-sizing:border-box}
+html,body{margin:0;width:1200px;height:630px;overflow:hidden;background:var(--nuit)}
+.scene{position:relative;width:1200px;height:630px;overflow:hidden;
+  background:radial-gradient(ellipse 50% 60% at 82% 0,var(--halo-a),transparent 70%),radial-gradient(ellipse 60% 70% at 0 30%,var(--halo-b),transparent 72%),linear-gradient(var(--nuit-2),var(--nuit) 80%)}
+.etoile{position:absolute;border-radius:50%;background:#fff}
+.lune{position:absolute;top:58px;right:96px;width:96px;height:96px;border-radius:50%;background:radial-gradient(circle at 36% 34%,#fffaf0,#ebe3d0 58%,#d4c9b0);box-shadow:0 0 60px 16px rgba(255,241,204,.2),0 0 160px 60px rgba(255,241,204,.07)}
+.fil{position:absolute;left:0;top:0;width:1200px;height:70px;overflow:visible}
+.fil path{fill:none;stroke:var(--fil);stroke-width:3}
+.ampoule{position:absolute;width:18px;height:27px;margin-left:-9px;border-radius:50% 50% 50% 50%/42% 42% 58% 58%;background:radial-gradient(circle at 40% 32%,rgba(255,255,255,.85) 0 10%,transparent 38%),var(--c);box-shadow:0 2px 22px 6px var(--c)}
+.ampoule::before{content:"";position:absolute;left:50%;top:-7px;width:10px;height:8px;translate:-50% 0;background:var(--fil);border-radius:2px}
+.ampoule.ronde{width:20px;height:20px;margin-left:-10px;border-radius:50%}
+.ampoule.ronde::before{top:-14px;width:2px;height:14px;border-radius:0}
+.ballon{position:absolute;width:52px;height:64px;border-radius:50% 50% 50% 50%/44% 44% 56% 56%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.7) 0 8%,transparent 32%),var(--c);box-shadow:inset -8px -10px 16px rgba(0,0,0,.2)}
+.ballon::after{content:"";position:absolute;left:50%;top:100%;width:2px;height:90px;margin-top:4px;background:linear-gradient(rgba(255,255,255,.6),rgba(255,255,255,0))}
+.etincelle{position:absolute;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:var(--c);box-shadow:0 0 12px 3px var(--c)}
+.texte{position:absolute;left:0;right:0;top:104px;text-align:center}
+.surtitre{margin:0;font:600 22px/1 "Figtree",sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--bougie)}
+h1{margin:18px 0 0;font:400 124px/1 "Gloock",Georgia,serif;color:var(--givre);letter-spacing:-.01em}
+h1 em{font-style:normal;color:var(--bougie);text-shadow:0 0 40px rgba(243,185,80,.35)}
+.sous{margin:16px 0 0;font:700 42px/1.1 "Caveat",cursive;color:var(--doux)}
+.foret{position:absolute;left:0;bottom:0;width:1200px;height:200px}
+.cadeaux{position:absolute;left:50%;bottom:22px;translate:-50% 0;display:flex;align-items:flex-end;gap:34px}
+.cadeau{position:relative;width:var(--t);aspect-ratio:1/1.02}
+.cadeau>span{position:absolute;display:block}
+.ombre{left:-6%;right:-6%;bottom:-9%;height:16%;background:radial-gradient(closest-side,rgba(0,0,0,.65),transparent)}
+.boite{left:7%;right:7%;top:30%;bottom:0;overflow:hidden;border-radius:3px 3px 6px 6px;background:var(--emballage);box-shadow:inset 0 -18px 26px -8px rgba(0,0,0,.38)}
+.boite::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:15%;translate:-50% 0;background:var(--ruban)}
+.boite::after{content:"";position:absolute;left:0;right:0;top:46%;height:13%;background:var(--ruban)}
+.couvercle{left:2%;right:2%;top:17%;height:16%;border-radius:4px;background:var(--emballage);box-shadow:0 8px 10px -6px rgba(0,0,0,.55),inset 0 -5px 8px -3px rgba(0,0,0,.25)}
+.couvercle::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:13.4%;translate:-50% 0;background:var(--ruban)}
+.noeud{left:50%;top:1%;width:44%;height:19%;translate:-50% 0}
+.noeud i{position:absolute;bottom:4%;width:52%;height:96%;background:radial-gradient(ellipse 34% 30% at 50% 55%,rgba(0,0,0,.3) 70%,transparent 74%),var(--ruban);border-radius:55% 45% 40% 60%/60% 60% 40% 40%}
+.noeud i:first-child{left:0;transform-origin:100% 100%;rotate:-16deg}
+.noeud i:last-child{right:0;transform-origin:0 100%;rotate:16deg;border-radius:45% 55% 60% 40%/60% 60% 40% 40%}
+.noeud b{position:absolute;left:50%;bottom:-6%;width:24%;aspect-ratio:1;translate:-50% 0;border-radius:42%;background:var(--ruban)}
+.etiquette{right:-10%;top:42%;padding:6px 12px 7px 22px;border-radius:5px;background:var(--kraft);color:var(--encre);font:700 26px/1 "Caveat",cursive;rotate:12deg;box-shadow:0 4px 8px rgba(0,0,0,.35)}
+.etiquette::before{content:"";position:absolute;left:8px;top:50%;width:7px;height:7px;translate:0 -50%;border-radius:50%;background:var(--nuit)}
+.p1{--emballage:radial-gradient(circle,#f3c45c 0 3px,transparent 3.6px) 0 0/22px 22px,radial-gradient(circle,#f3c45c 0 3px,transparent 3.6px) 11px 11px/22px 22px,#b8304a;--ruban:#f0c45c}
+.p2{--emballage:repeating-linear-gradient(135deg,#235c4d 0 12px,#1a4b3e 12px 24px);--ruban:#d13a52}
+.p4{--emballage:radial-gradient(circle,#eef2f8 0 2px,transparent 2.6px) 0 0/22px 22px,#24386a;--ruban:#e9e2cf}
+.p5{--emballage:repeating-linear-gradient(45deg,#e2a537 0 9px,#efbd57 9px 18px);--ruban:#1f4b40}
+.p6{--emballage:linear-gradient(90deg,rgba(255,255,255,.16) 50%,transparent 50%) 0 0/24px 24px,linear-gradient(rgba(255,255,255,.16) 50%,transparent 50%) 0 0/24px 24px,#a8293f;--ruban:#f4efe4}
+body.icone,body.icone .scene{width:180px;height:180px}
+body.icone .scene{background:radial-gradient(circle at 50% 30%,#1f4b40,#0c1d1a 75%)}
+body.icone .cadeau{position:absolute;left:50%;top:52%;translate:-50% -50%}
+</style>
+</head>
+<body>
+<div class="scene" id="scene"></div>
+<script>
+const p = new URLSearchParams(location.search);
+const scene = document.getElementById("scene");
+const theme = ["noel", "anniversaire", "fete"].includes(p.get("theme")) ? p.get("theme") : "noel";
+const cadeau = (c, t, etiquette) => `<div class="cadeau ${c}" style="--t:${t}px"><span class="ombre"></span><span class="boite"></span><span class="couvercle"></span><span class="noeud"><i></i><i></i><b></b></span>${etiquette ? `<span class="etiquette">${etiquette}</span>` : ""}</div>`;
+let graine = 7;
+const alea = () => (graine = (graine * 16807) % 2147483647) / 2147483647;
+
+if (p.has("icone")) {
+  document.body.classList.add("icone");
+  scene.innerHTML = cadeau("p1", 118, "");
+} else {
+  document.body.classList.add(theme);
+  let decor = "";
+  for (let i = 0; i < 90; i++) {
+    const s = 1 + alea() * 2.4;
+    decor += `<span class="etoile" style="left:${alea() * 1200}px;top:${60 + alea() * 330}px;width:${s}px;height:${s}px;opacity:${0.25 + alea() * 0.7}"></span>`;
+  }
+  // guirlande, fanions ou lampions
+  const n = 16, seg = 1200 / n;
+  let d = "M-2 8", haut = "";
+  const C = ["var(--bougie)", "var(--airelle)", "var(--menthe)", "#f4efe4", "var(--glacier)"];
+  for (let i = 0; i < n; i++) {
+    const x0 = i * seg, cx = x0 + seg / 2, x1 = x0 + seg, creux = 44 + (i % 3) * 4;
+    d += ` Q${cx} ${creux} ${x1} 8`;
+    if (theme === "anniversaire") {
+      for (const t of [0.2, 0.5, 0.8]) {
+        const u = 1 - t, x = u * u * x0 + 2 * u * t * cx + t * t * x1, y = u * u * 8 + 2 * u * t * creux + t * t * 8;
+        const ang = Math.atan2(2 * u * (creux - 8) + 2 * t * (8 - creux), 2 * u * (cx - x0) + 2 * t * (x1 - cx)) * 180 / Math.PI;
+        haut += `<g transform="translate(${x} ${y}) rotate(${ang})"><polygon points="-11,0 11,0 0,24" fill="${C[(i * 3 + t * 10) % 5 | 0]}"/></g>`;
+      }
+    } else if (theme === "fete") {
+      decor += `<span class="ampoule ronde" style="left:${cx}px;top:${(16 + 2 * creux) / 4 + 14}px;--c:${i % 2 ? "#fff3cf" : "#f6c453"}"></span>`;
+    } else {
+      decor += `<span class="ampoule" style="left:${cx}px;top:${(16 + 2 * creux) / 4 - 1}px;--c:${C[i % 5]};rotate:${i % 2 ? 7 : -7}deg"></span>`;
+    }
+  }
+  if (theme === "noel") decor += `<div class="lune"></div>`;
+  if (theme === "anniversaire") {
+    [[60, 310, "var(--airelle)"], [150, 360, "var(--bougie)"], [1000, 345, "var(--menthe)"], [1090, 300, "var(--glacier)"]].forEach(([x, y, c]) => {
+      decor += `<span class="ballon" style="left:${x}px;top:${y}px;--c:${c}"></span>`;
+    });
+  }
+  if (theme === "fete") {
+    [[130, 385, "#f6c453"], [1075, 375, "#ff7a8a"], [985, 430, "#8fb0ff"]].forEach(([x, y, c]) => {
+      for (let i = 0; i < 18; i++) {
+        const a = (i / 18) * Math.PI * 2, r = 55 + (i % 2) * 14;
+        decor += `<span class="etincelle" style="left:${x + Math.cos(a) * r}px;top:${y + Math.sin(a) * r}px;--c:${c};opacity:${0.5 + (i % 3) * 0.2}"></span>`;
+      }
+    });
+  }
+  // silhouette du bas
+  let loin = "", pres = "", fenetres = "";
+  if (theme === "anniversaire") {
+    loin = "M0 200L0 150";
+    for (let x = 0; x < 1300; x += 120) loin += `Q${x + 60} ${100 + alea() * 30} ${x + 120} ${140 + alea() * 14}`;
+    loin += "L1300 200Z";
+  } else if (theme === "fete") {
+    for (let x = -10; x < 1220;) {
+      const w = 36 + alea() * 50, h = 60 + alea() * 90, y = 176 - h;
+      loin += `M${x} 176V${y}H${x + w}V176Z`;
+      for (let fy = y + 10; fy < 166; fy += 15) for (let fx = x + 6; fx < x + w - 8; fx += 12) if (alea() < 0.3) fenetres += `M${fx} ${fy}h5v7h-5Z`;
+      x += w + 3;
+    }
+    for (let x = -10; x < 1220;) { const w = 60 + alea() * 80, h = 20 + alea() * 30, y = 204 - h; pres += `M${x} 204V${y}L${x + w / 2} ${y - 14}L${x + w} ${y}V204Z`; x += w; }
+  } else {
+    const sapin = (cx, base, h) => { const w = h * 0.58, t = base - h, P = (dx, dy) => `${(cx + dx * w).toFixed(1)} ${(t + dy * h).toFixed(1)}`;
+      return `M${P(0, 0)}L${P(.26, .34)}L${P(.12, .34)}L${P(.38, .66)}L${P(.22, .66)}L${P(.5, .93)}L${P(.05, .93)}L${P(.05, 1)}L${P(-.05, 1)}L${P(-.05, .93)}L${P(-.5, .93)}L${P(-.22, .66)}L${P(-.38, .66)}L${P(-.12, .34)}L${P(-.26, .34)}Z`; };
+    for (let x = -20; x < 1240; x += 44 + alea() * 34) loin += sapin(x, 176, 70 + alea() * 70);
+    for (let x = -10; x < 1260; x += 80 + alea() * 60) pres += sapin(x, 206, 90 + alea() * 90);
+  }
+  scene.innerHTML = `${decor}<svg class="fil" viewBox="0 0 1200 70"><path d="${d}"/>${haut}</svg>
+    <div class="texte"><p class="surtitre">Pour toute la famille</p><h1>Ma liste de <em>souhaits</em></h1>
+    <p class="sous">Déballe les paquets et dis-nous de quoi tu t'occupes</p></div>
+    <svg class="foret" viewBox="0 0 1200 200"><path d="${loin}" fill="var(--loin)"/><path d="${fenetres}" fill="var(--bougie)" opacity=".5"/><path d="M0 200L0 170Q300 152 600 166T1200 160L1200 200Z" fill="rgba(255,255,255,.06)"/><path d="${pres}M0 194H1200V200H0Z" fill="var(--nuit)"/></svg>
+    <div class="cadeaux">${cadeau("p2", 112, "")}${cadeau(theme === "noel" ? "p1" : theme === "anniversaire" ? "p6" : "p5", 150, "N°1")}${cadeau("p4", 124, "")}${cadeau(theme === "fete" ? "p1" : "p5", 96, "")}</div>`;
+}
+</script>
+</body>
+</html>

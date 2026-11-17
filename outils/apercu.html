@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Aperçu de test</title>
+<style>html,body{margin:0;background:#000}iframe{display:block;border:0}</style>
+</head>
+<body>
+<!-- Page de test locale (non déployée) : affiche le site dans un cadre à la taille voulue et rejoue un scénario.
+     Exemples : /outils/apercu.html?w=390&h=1400&scenario=deballer&id=echarpe -->
+<iframe id="f" title="Site"></iframe>
+<script>
+const p = new URLSearchParams(location.search);
+const f = document.getElementById("f");
+f.style.width = (p.get("w") || 390) + "px";
+f.style.height = (p.get("h") || 1400) + "px";
+f.src = "/" + (p.get("hash") ? "#" + p.get("hash") : "");
+f.onload = () => {
+  const d = f.contentDocument, w = f.contentWindow;
+  const attendre = Number(p.get("attente") || 3500);
+  const sc = p.get("scenario");
+  setTimeout(() => {
+    if (p.get("y")) w.scrollTo(0, Number(p.get("y")));
+    if (sc === "deballer" || sc === "pendant") {
+      const b = d.querySelector(`.carte[data-id="${p.get("id") || "echarpe"}"] .face-avant`);
+      b.scrollIntoView({ block: "center" });
+      b.click();
+    }
+    if (sc === "lettre") d.getElementById("enveloppe").click();
+  }, attendre);
+};
+</script>
+</body>
+</html>
